@@ -53,11 +53,6 @@ const PROVIDERS = [
     getTvUrl: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}`,
   },
   {
-    name: "vidsrc.vip",
-    getMovieUrl: (id) => `https://vidsrc.vip/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.vip/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
-  },
-  {
     name: "vidsrc.me",
     getMovieUrl: (id) => `https://vidsrc.me/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
@@ -70,8 +65,15 @@ export const LANGUAGE_NAMES = {
 
 export const COMMON_LANGUAGES = Object.keys(LANGUAGE_NAMES);
 
-// Global browser instance, launched once
+// Global browser instance
 let browser;
+
+async function getBrowser() {
+  if (!browser || !browser.isConnected()) {
+    browser = await chromium.launch({ headless: true });
+  }
+  return browser;
+}
 
 // Simple in-memory cache to avoid scraping same query repeatedly (15 minutes)
 const cache = new Map();
@@ -80,7 +82,8 @@ const cache = new Map();
 async function scrapeProvider(domain, url) {
   console.log(`\n[${domain}] Starting scrape for URL: ${url}`);
 
-  const context = await browser.newContext({
+  const activeBrowser = await getBrowser();
+  const context = await activeBrowser.newContext({
     userAgent:
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     ignoreHTTPSErrors: true,
@@ -473,24 +476,12 @@ app.get("/", (req, res) => {
   );
 });
 
-// Launch browser once before server starts listening
-(async () => {
-  browser = await chromium.launch({
-    headless: true,
-  });
+// Run local server if not on Vercel
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
   });
-})();
+}
 
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("Closing browser...");
-  if (browser) await browser.close();
-  process.exit();
-});
-process.on("SIGTERM", async () => {
-  console.log("Closing browser...");
-  if (browser) await browser.close();
-  process.exit();
-});
+// Export for Vercel
+export default app;
