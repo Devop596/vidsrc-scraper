@@ -32,14 +32,29 @@ const PROVIDERS = [
   },
   
   {
-    name: "vidsrc.net",
-    getMovieUrl: (id) => `https://vidsrc.net/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.net/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+    name: "watchot",
+    getMovieUrl: (id) => `https://watchout-player.netlify.app/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://watchout-player.netlify.app/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
-    name: "vidsrc.vip",
-    getMovieUrl: (id) => `https://vidsrc.vip/embed/movie/${id}`,
-    getTvUrl: (id, s, e) => `https://vidsrc.vip/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+    name: "vidlink.pro",
+    getMovieUrl: (id) => `https://vidlink.pro/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidlink.pro/tv?tmdb=${id}&season=${s}&episode=${e}`,
+  },
+  {
+    name: "videasy.net",
+    getMovieUrl: (id) => `https://player.videasy.net/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://player.videasy.net/tv?tmdb=${id}&season=${s}&episode=${e}`,
+  },
+  {
+    name: "vidsrc.to",
+    getMovieUrl: (id) => `https://vidsrc.to/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://vidsrc.to/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
+  },
+  {
+    name: "primesrc.me",
+    getMovieUrl: (id) => `https://primesrc.me/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://primesrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
     name: "vidsrc.io",
