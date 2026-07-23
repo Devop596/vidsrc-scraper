@@ -30,6 +30,7 @@ const PROVIDERS = [
     getMovieUrl: (id) => `https://vidsrc.pm/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://vidsrc.pm/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
+  
   {
     name: "vidsrc.net",
     getMovieUrl: (id) => `https://vidsrc.net/embed/movie/${id}`,
@@ -65,25 +66,17 @@ export const LANGUAGE_NAMES = {
 
 export const COMMON_LANGUAGES = Object.keys(LANGUAGE_NAMES);
 
-// Global browser instance
+// Global browser instance, launched once
 let browser;
-
-async function getBrowser() {
-  if (!browser || !browser.isConnected()) {
-    browser = await chromium.launch({ headless: true });
-  }
-  return browser;
-}
 
 // Simple in-memory cache to avoid scraping same query repeatedly (15 minutes)
 const cache = new Map();
 
 // 🧠 Scraper util function
 async function scrapeProvider(domain, url) {
-  console.log(`\n[${domain}] Starting scrape for URL: ${url}`);
+  console.log(`\n[${domain}] Starting scrape for URL:${url}`);
 
-  const activeBrowser = await getBrowser();
-  const context = await activeBrowser.newContext({
+  const context = await browser.newContext({
     userAgent:
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     ignoreHTTPSErrors: true,
@@ -147,12 +140,12 @@ async function scrapeProvider(domain, url) {
 
       if (isSubtitle(reqUrl) && !subtitles.includes(reqUrl)) {
         subtitles.push(reqUrl);
-        console.log(`[${domain}] Found Subtitle: ${reqUrl}`);
+        console.log(`[${domain}] Found Subtitle:${reqUrl}`);
       }
     });
 
     // 2. الانتقال إلى الصفحة مع حماية الـ DNS
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 }).catch((e) => {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 }).catch((e) => {
       throw new Error(`Navigation failed: ${e.message}`);
     });
 
@@ -201,12 +194,12 @@ async function scrapeProvider(domain, url) {
   } catch (error) {
     await page.close().catch(() => {});
     await context.close().catch(() => {});
-    console.error(`[${domain}] Error: ${error.message}`);
+    console.error(`[${domain}] Error:${error.message}`);
     return { hls_url: null, subtitles: [], error: error.message };
   }
 }
 
-// Extract endpoint
+// 🎯 Endpoint الأصلي Extract
 app.get("/extract", async (req, res) => {
   const type = req.query.type || "movie";
   const tmdb_id = req.query.tmdb_id;
@@ -284,6 +277,36 @@ app.get("/extract", async (req, res) => {
       success: false,
       error: "Unexpected server error",
       results: {},
+    });
+  }
+});
+
+// 🎯 دعم مسار /scrape لتجنب خطأ Cannot GET /scrape
+app.get("/scrape", async (req, res) => {
+  const targetUrl = req.query.url;
+
+  if (!targetUrl) {
+    return res.status(400).json({
+      success: false,
+      error: "url query parameter is required (e.g. /scrape?url=https://vidsrc.to/...)",
+    });
+  }
+
+  try {
+    // استخراج اسم الدومين
+    const domain = new URL(targetUrl).hostname;
+    const result = await scrapeProvider(domain, targetUrl);
+
+    return res.json({
+      success: !!result.hls_url,
+      results: {
+        [domain]: result,
+      },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message || "Failed to scrape URL",
     });
   }
 });
@@ -472,16 +495,28 @@ app.get("/subtitle-proxy", async (req, res) => {
 
 app.get("/", (req, res) => {
   res.send(
-    "🎬 Multi-Server Scraper API is running. Visit /movie-subtitles or /extract to use."
+    "🎬 Multi-Server Scraper API is running. Visit /extract or /scrape to use."
   );
 });
 
-// Run local server if not on Vercel
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+// Launch browser once before server starts listening
+(async () => {
+  browser = await chromium.launch({
+    headless: true,
+  });
   app.listen(PORT, () => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
   });
-}
+})();
 
-// Export for Vercel
-export default app;
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("Closing browser...");
+  if (browser) await browser.close();
+  process.exit();
+});
+process.on("SIGTERM", async () => {
+  console.log("Closing browser...");
+  if (browser) await browser.close();
+  process.exit();
+});
