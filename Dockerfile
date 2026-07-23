@@ -1,5 +1,5 @@
 # 1. استخدام صورة Playwright الرسمية المجهزة بمتصفح Chromium وكل الاعتماديات
-FROM mcr.microsoft.com/playwright:v1.44.0-jammy
+FROM mcr.microsoft.com/playwright:v1.61.1-jammy
 
 # 2. تحديد مجلد العمل داخل الـ Container
 WORKDIR /app
