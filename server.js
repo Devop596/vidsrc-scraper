@@ -37,7 +37,7 @@ const PROVIDERS = [
     getTvUrl: (id, s, e) => `https://watchout-player.netlify.app/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
-    name: "watchout",
+    name: "vidrift",
     getMovieUrl: (id) => `https://401473fc.vidrift.pages.dev/embed/movie/${id}`,
     getTvUrl: (id, s, e) => `https://401473fc.vidrift.pages.dev/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
