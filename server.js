@@ -32,9 +32,14 @@ const PROVIDERS = [
   },
   
   {
-    name: "watchot",
+    name: "watchout",
     getMovieUrl: (id) => `https://watchout-player.netlify.app/movie/${id}`,
     getTvUrl: (id, s, e) => `https://watchout-player.netlify.app/tv?tmdb=${id}&season=${s}&episode=${e}`,
+  },
+  {
+    name: "watchout",
+    getMovieUrl: (id) => `https://401473fc.vidrift.pages.dev/embed/movie/${id}`,
+    getTvUrl: (id, s, e) => `https://401473fc.vidrift.pages.dev/embed/tv?tmdb=${id}&season=${s}&episode=${e}`,
   },
   {
     name: "vidlink.pro",
